@@ -254,3 +254,41 @@ while True:
     else:
         print("Closed!")
         break
+
+
+
+
+
+
+
+
+
+
+
+         """"""""""""""""""""""""""""
+        # Create subplots
+        fig, axs = plt.subplots(2, 3, figsize=(15, 10))
+
+        # Plot original image and its histogram
+        axs[0, 0].imshow(cv2.cvtColor(img1, cv2.COLOR_BGR2RGB))
+        axs[0, 0].set_title('Original Image')
+
+        plt.hist(img1, axs[0, 1], 'Original Image Histogram')
+
+        # Plot encoded image and its histogram
+        axs[1, 0].imshow(cv2.cvtColor(img2, cv2.COLOR_BGR2RGB))
+        axs[1, 0].set_title('Encoded Image')
+
+
+        # Plot correlation and MSE
+        axs[0, 2].axis('off')
+        axs[1, 2].axis('off')
+        axs[0, 2].text(0, 0.5, f'Correlation: {Compare().correlation(img1, img2)[0][0]}',
+                       fontsize=12)
+        axs[1, 2].text(0, 0.5, f'MSE: {Compare().meanSquareError(img1, img2)}', fontsize=12)
+
+        plt.tight_layout()
+        plt.show()
+
+        # Save the figure
+        fig.savefig('Comparison_result/comparison_figure.png')
