@@ -3,7 +3,8 @@ import cv2
 import pywt
 import copy
 from PIL import Image
-import os
+from scipy.fft import fft2, fftshift
+from skimage.metrics import peak_signal_noise_ratio
 import math
 import xlwt
 from scipy import signal
@@ -241,7 +242,7 @@ class Compare():
         mse = self.meanSquareError(img1, img2)
         if mse == 0:
             return 100
-        PIXEL_MAX = 255.0
+        PIXEL_MAX = 256.0
         return 20 * math.log10(PIXEL_MAX / math.sqrt(mse))
 
     def plot_histogram(self,image, ax, title):
@@ -249,6 +250,46 @@ class Compare():
         ax.plot(hist, color='gray')
         ax.set_title(title)
         ax.set_xlim([0, 256])
+
+class Figs():
+    def plot_frequency(original_image_path, title):
+        image = cv2.imread(original_image_path, cv2.IMREAD_GRAYSCALE)
+        img = cv2.imread(original_image_path)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        # Compute 2D Fourier Transform
+        f_transform = fftshift(fft2(image))
+
+        # Compute magnitude spectrum
+        magnitude_spectrum = np.log(np.abs(f_transform) + 1)
+
+        # Display the images
+        plt.figure(figsize=(12, 6))
+
+        plt.subplot(121), plt.imshow(img, cmap='gray')
+        plt.title('Image - ' + title), plt.xticks([]), plt.yticks([])
+
+        plt.subplot(122), plt.imshow(magnitude_spectrum, cmap='gray')
+        plt.title('Frequency Spectrum - ' + title), plt.xticks([]), plt.yticks([])
+
+        plt.show()
+
+    def plot_histogram(image, title):
+        plt.figure(figsize=(8, 5))
+        plt.hist(image.flatten(), bins=256, range=[0, 256], color='gray', alpha=0.7)
+        plt.title('Histogram - ' + title)
+        plt.xlabel('Pixel Intensity')
+        plt.ylabel('Frequency')
+        plt.show()
+
+    def plot_bitplanes(image, title):
+        plt.figure(figsize=(12, 8))
+        for i in range(8):
+            bitplane = (image >> i) & 1
+            plt.subplot(2, 4, i + 1), plt.imshow(bitplane, cmap='gray')
+            plt.title(f'Bit {7 - i}')
+
+        plt.suptitle('Bitplanes - ' + title)
+        plt.show()
 
 def main():
     original_image_path = 'Original_image/lena.jpg'
@@ -279,13 +320,38 @@ def main():
     sheet1.write(0, 0, "Original vs", style=style)
     sheet1.write(0, 1, "MSE", style=style)
     sheet1.write(0, 2, "PSNR", style=style)
+
     sheet1.write(3, 0, "DWT")
     sheet1.write(3, 1, Compare().meanSquareError(img1, img2))
     sheet1.write(3, 2, Compare().psnr(img1, img2))
 
-    book.save("Comparison_result/Comparison.xls")
+
+    book.save("Comparison_result/Comparison_results.xls")
     print("Comparison Results were saved as xls file!")
 
+
+
+    #########################################
+    # Load original and encoded images
+
+
+    # Plot frequency spectrum before and after encoding
+    Figs.plot_frequency(original_image_path, 'Original Image')
+    Figs.plot_frequency(encoded_image_path, 'Encoded Image')
+
+    # Plot histograms
+    Figs.plot_histogram(img1, 'Original Image')
+    Figs.plot_histogram(img2, 'Encoded Image')
+
+    # Plot bitplanes
+    Figs.plot_bitplanes(img1, 'Original Image')
+    Figs.plot_bitplanes(img2, 'Encoded Image')
+
+
+
+    # Calculate PSNR
+    #psnr_value = peak_signal_noise_ratio(img1, img2)
+    #print(f'PSNR: {psnr_value} dB')
 
 
 if __name__ == "__main__":
