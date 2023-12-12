@@ -3,9 +3,6 @@ import cv2
 import pywt
 import copy
 from PIL import Image
-from skimage.metrics import peak_signal_noise_ratio
-import math
-import xlwt
 
 class DWT():
     def wordToBit(self,words):
@@ -16,7 +13,6 @@ class DWT():
             result.extend([int(b) for b in bits])
         return result
 
-    # fungsi merubah bit menjadi string
     def bitToWord(self,bits):
         chars = []
         for b in range(len(bits) // 8):
@@ -25,13 +21,11 @@ class DWT():
         flag = ''.join(chars)
         return flag
 
-    # fungsi merubah int menjadi bit
     def intToBit(self,val):
         result = list(format(val, "b"))
         result = list(map(int, result))
         return result
 
-    # fungsi merubah bit menjadi int
     def bitToInt(self,bit):
         val = ''.join(str(e) for e in bit)
         result = int(val, 2)
@@ -58,35 +52,27 @@ class DWT():
 
     def dwtEncode(self,image_path, msg, encoded_path):
         img= cv2.imread(image_path)
-        blue, green, red = cv2.split(img)  # pada opencv menggunakan format b, g, r
+        blue, green, red = cv2.split(img)
 
-        # Proses merubah pesan String to Bit
         bitMessage = self.wordToBit(msg)
 
-        # mendapatkan panjang pesan
         bitLenght = len(bitMessage)
         index = 0
 
-        # Proses DWT-2D Red
         coeffsr = pywt.dwt2(red, 'haar')
         cAr, (cHr, cVr, cDr) = coeffsr
-        # print (cAr)
 
-        # Proses DWT-2D Green
         coeffsg = pywt.dwt2(green, 'haar')
         cAg, (cHg, cVg, cDg) = coeffsg
 
-        # Proses DWT-2D Blue
         coeffsb = pywt.dwt2(blue, 'haar')
         cAb, (cHb, cVb, cDb) = coeffsb
 
 
-        # inisialisasi cA baru tempat pesan akan disimpan
         cArResult = copy.deepcopy(cAr)
         cAgResult = copy.deepcopy(cAg)
         cAbResult = copy.deepcopy(cAb)
 
-        # Proses menyisipkan pesan ke dalam gambar
         for i in range(len(cAr)):
             for j in range(len(cAr)):
                 # red
@@ -116,12 +102,10 @@ class DWT():
         idwr = pywt.idwt2(coeffsr2, 'haar')
         idwr = np.uint8(idwr)
 
-        # convert dengan IDWT Green
         coeffsg2 = cAgResult, (cHg, cVg, cDg)
         idwg = pywt.idwt2(coeffsg2, 'haar')
         idwg = np.uint8(idwg)
 
-        # convert dengan IDWT Blue
         coeffsb2 = cAbResult, (cHb, cVb, cDb)
         idwb = pywt.idwt2(coeffsb2, 'haar')
         idwb = np.uint8(idwb)
@@ -134,18 +118,14 @@ class DWT():
     def dwtDecode(self,image_path):
         img= cv2.imread(image_path)
 
-        # pada opencv menggunakan format b, g, r
         blue, green, red = cv2.split(img)
 
-        # Proses DWT-2D Red
         coeffsr = pywt.dwt2(red, 'haar')
         cAr, (cHr, cVr, cDr) = coeffsr
 
-        # Proses DWT-2D Green
         coeffsg = pywt.dwt2(green, 'haar')
         cAg, (cHg, cVg, cDg) = coeffsg
 
-        # Proses DWT-2D Blue
         coeffsb = pywt.dwt2(blue, 'haar')
         cAb, (cHb, cVb, cDb) = coeffsb
         bit = []
@@ -173,15 +153,12 @@ class DWT():
         img = cv2.imread(image_path)
         blue, green, red = cv2.split(img)
 
-        # Proses DWT-2D Red
         coeffsr = pywt.dwt2(red, 'haar')
         cAr, (cHr, cVr, cDr) = coeffsr
 
-        # Proses DWT-2D Green
         coeffsg = pywt.dwt2(green, 'haar')
         cAg, (cHg, cVg, cDg) = coeffsg
 
-        # Proses DWT-2D Blue
         coeffsb = pywt.dwt2(blue, 'haar')
         cAb, (cHb, cVb, cDb) = coeffsb
 
