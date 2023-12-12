@@ -107,12 +107,13 @@ class DWT():
                     cAbResult[i, j] = cAb[i, j] + self.lsbVal(bitMessage[index], lsbPixel)
                     index += 1
 
-        # Normalize coefficients
-        cArResult = self.normalize_coefficients(cArResult)
-        cAgResult = self.normalize_coefficients(cAgResult)
-        cAbResult = self.normalize_coefficients(cAbResult)
-        # convert dengan IDWT Red
-        # print(cArResult)
+        # Normalize coefficients --- needs more actions
+        #cArResult = self.normalize_coefficients(cArResult)
+        #cAgResult = self.normalize_coefficients(cAgResult)
+        #cAbResult = self.normalize_coefficients(cAbResult)
+
+
+
         coeffsr2 = cArResult, (cHr, cVr, cDr)
         idwr = pywt.idwt2(coeffsr2, 'haar')
         idwr = np.uint8(idwr)
@@ -238,12 +239,6 @@ class Compare():
         error /= float(img1.shape[0] * img1.shape[1]);
         return error
 
-    def psnr(self, img1, img2):
-        mse = self.meanSquareError(img1, img2)
-        if mse == 0:
-            return 100
-        PIXEL_MAX = 256.0
-        return 20 * math.log10(PIXEL_MAX / math.sqrt(mse))
 
     def plot_histogram(self,image, ax, title):
         hist = cv2.calcHist([np.array(image)], [0], None, [256], [0, 256])
@@ -293,19 +288,18 @@ class Figs():
 
 def main():
     original_image_path = 'Original_image/lena.jpg'
-    message_to_embed = "Hello world!"
+    message_to_embed = "wassuuup chabibaaa"
 
     # Chemins pour l'encodage
-    encoded_image_path = 'Encoded_image/encoded_image3.jpg'
+    encoded_image_path = 'Encoded_image/lena_encoded.jpg'
 
 
     # Testez la fonction d'encodage
-    #DWT().dwtEncode(original_image_path, message_to_embed,encoded_image_path)
-    #print("Message has been embedded. Encoded image saved at:", encoded_image_path)
+    DWT().dwtEncode(original_image_path, message_to_embed,encoded_image_path)
+    print("Message has been embedded. Encoded image saved at:", encoded_image_path)
 
     # Testez la fonction d'extraction
-#    extracted_message = dwtDecode(original_image_path)
-    #extracted_message = DWT().dwtDecode(encoded_image_path)
+    extracted_message = DWT().dwtDecode(encoded_image_path)
 
     #print("Extracted Message:\n", extracted_message)
     img1= cv2.imread(original_image_path)
@@ -323,7 +317,7 @@ def main():
 
     sheet1.write(3, 0, "DWT")
     sheet1.write(3, 1, Compare().meanSquareError(img1, img2))
-    sheet1.write(3, 2, Compare().psnr(img1, img2))
+    sheet1.write(3, 2, peak_signal_noise_ratio(img1, img2))
 
 
     book.save("Comparison_result/Comparison_results.xls")
@@ -347,11 +341,6 @@ def main():
     Figs.plot_bitplanes(img1, 'Original Image')
     Figs.plot_bitplanes(img2, 'Encoded Image')
 
-
-
-    # Calculate PSNR
-    #psnr_value = peak_signal_noise_ratio(img1, img2)
-    #print(f'PSNR: {psnr_value} dB')
 
 
 if __name__ == "__main__":
