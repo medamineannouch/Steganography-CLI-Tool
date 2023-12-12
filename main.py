@@ -20,7 +20,7 @@ def main():
     print("Message has been embedded. Encoded image saved at:", dwt_encoded_image_path)
 
     # encodage lsb
-    lsb.LSB().insert(original_image_path, message_to_embed, lsb_encoded_image_path)
+    lsb_encoded_image_path = lsb.Lsb(2).insert(original_image_path, message_to_embed)
     print("Message has been embedded. Encoded image saved at:", lsb_encoded_image_path)
 
 
