@@ -52,10 +52,14 @@ class Figs():
         plt.show()
 
     def plot_bitplanes(image, title):
+        # Ensure the image is in the range [0, 255]
+        image = (image * 255).astype(int)
+
         plt.figure(figsize=(12, 8))
         for i in range(8):
             bitplane = (image >> i) & 1
-            plt.subplot(2, 4, i + 1), plt.imshow(bitplane, cmap='gray')
+            plt.subplot(2, 4, i + 1)
+            plt.imshow(bitplane, cmap='gray', vmin=0, vmax=1)  # Ensure proper normalization
             plt.title(f'Bit {7 - i}')
 
         plt.suptitle('Bitplanes - ' + title)
