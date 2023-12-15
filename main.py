@@ -44,14 +44,12 @@ Vulputate odio ut enim blandit volutpat. Gravida quis blandit turpis cursus in. 
 
 
 
-    img_dwt_original= cv2.imread(original_image_path)
+    img_original= cv2.imread(original_image_path)
     img_dwt_encoded= cv2.imread(dwt_encoded_image_path)
-    img_dwt_original = cv2.cvtColor(img_dwt_original, cv2.COLOR_BGR2RGB)
+    img_original = cv2.cvtColor(img_original, cv2.COLOR_BGR2RGB)
     img_dwt_encoded = cv2.cvtColor(img_dwt_encoded, cv2.COLOR_BGR2RGB)
 
-    img_lsb_original = cv2.imread(original_image_path)
     img_lsb_encoded = cv2.imread(lsb_encoded_image_path)
-    img_lsb_original = cv2.cvtColor(img_lsb_original, cv2.COLOR_BGR2RGB)
     img_lsb_encoded = cv2.cvtColor(img_lsb_encoded, cv2.COLOR_BGR2RGB)
 
     book = xlwt.Workbook()
@@ -63,12 +61,12 @@ Vulputate odio ut enim blandit volutpat. Gravida quis blandit turpis cursus in. 
     sheet1.write(1, 2, "PSNR", style=style)
 
     sheet1.write(2, 0, "DWT", style=style)
-    sheet1.write(2, 1, evaluate.Compare().meanSquareError(img_dwt_original, img_dwt_encoded))
-    sheet1.write(2, 2, peak_signal_noise_ratio(img_dwt_original, img_dwt_encoded))
+    sheet1.write(2, 1, evaluate.Compare().meanSquareError(img_original, img_dwt_encoded))
+    sheet1.write(2, 2, peak_signal_noise_ratio(img_original, img_dwt_encoded))
 
     sheet1.write(3, 0, "LSB", style=style)
-    sheet1.write(3, 1, evaluate.Compare().meanSquareError(img_lsb_original, img_lsb_encoded))
-    sheet1.write(3, 2, peak_signal_noise_ratio(img_lsb_original, img_lsb_encoded))
+    sheet1.write(3, 1, evaluate.Compare().meanSquareError(img_original, img_lsb_encoded))
+    sheet1.write(3, 2, peak_signal_noise_ratio(img_original, img_lsb_encoded))
 
     book.save("Comparison_result/Comparison_results.xls")
     print("Comparison Results were saved as xls file!")
@@ -80,17 +78,21 @@ Vulputate odio ut enim blandit volutpat. Gravida quis blandit turpis cursus in. 
 
 
     # Plot frequency spectrum before and after  encoding
-    evaluate.Figs.plot_frequency(original_image_path, 'Original Image')
-    evaluate.Figs.plot_frequency(dwt_encoded_image_path, 'DWT Encoded Image')
-    evaluate.Figs.plot_frequency(lsb_encoded_image_path, 'LSB Encoded Image')
+    #evaluate.Figs.plot_frequency(original_image_path, 'Original Image')
+    #evaluate.Figs.plot_frequency(dwt_encoded_image_path, 'DWT Encoded Image')
+    #evaluate.Figs.plot_frequency(lsb_encoded_image_path, 'LSB Encoded Image')
 
 
     # Plot histograms
-    evaluate.Figs.plot_histogram(img_dwt_original, 'Original Image')
-    evaluate.Figs.plot_histogram(img_dwt_encoded, 'DWT Encoded Image')
-    evaluate.Figs.plot_histogram(img_lsb_encoded, 'LSB Encoded Image')
+    #evaluate.Figs.plot_histogram(img_original, 'Original Image')
+    #evaluate.Figs.plot_histogram(img_dwt_encoded, 'DWT Encoded Image')
+    #evaluate.Figs.plot_histogram(img_lsb_encoded, 'LSB Encoded Image')
 
+    evaluate.Figs().plot_difference(img_original, img_dwt_encoded, 'DWT')
+    evaluate.Figs().plot_difference(img_original, img_lsb_encoded, 'LSB')
 
+    evaluate.Figs().plot_color_histograms(img_original, img_dwt_encoded, 'Color Panel Original vs DWT Encoded Image')
+    evaluate.Figs().plot_color_histograms(img_original, img_lsb_encoded, 'Color Panel Original vs LSB Encoded Image')
 
 if __name__ == "__main__":
     main()

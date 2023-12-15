@@ -64,3 +64,63 @@ class Figs():
 
         plt.suptitle('Bitplanes - ' + title)
         plt.show()
+
+    def plot_difference(self, original_image, encoded_image, title):
+        # Display the images
+        plt.figure(figsize=(12, 6))
+
+        # Original Image Color Panel
+        plt.subplot(131)
+        plt.imshow(original_image)
+        plt.title('Original Image ')
+        plt.axis('off')
+
+        # Encoded Image Color Panel
+        plt.subplot(132)
+        plt.imshow(encoded_image)
+        plt.title(title +'Encoded Image ')
+        plt.axis('off')
+
+
+        diff_image = cv2.absdiff(original_image, encoded_image)
+        plt.subplot(133)
+        plt.imshow(diff_image)
+        plt.title('Difference')
+        plt.axis('off')
+
+        plt.subplots_adjust(top=0.85)
+        plt.tight_layout(rect=[0, 0, 1, 0.95])
+        plt.suptitle('Difference Original vs ' + title + 'Encoded Image')
+        plt.show()
+
+
+    def plot_color_histograms(self, original_image, encoded_image, title):
+        # Display the color histograms
+        plt.figure(figsize=(15, 6))
+
+        # Original Image Color Histograms
+        plt.subplot(231)
+        self.plot_histogram(original_image[:, :, 0], 'Red Channel - Original',color='red')
+        plt.subplot(232)
+        self.plot_histogram(original_image[:, :, 1], 'Green Channel - Original',color='green')
+        plt.subplot(233)
+        self.plot_histogram(original_image[:, :, 2], 'Blue Channel - Original',color='blue')
+
+        # Encoded Image Color Histograms
+        plt.subplot(234)
+        self.plot_histogram(encoded_image[:, :, 0], 'Red Channel - Encoded',color='red')
+        plt.subplot(235)
+        self.plot_histogram(encoded_image[:, :, 1], 'Green Channel - Encoded',color='green')
+        plt.subplot(236)
+        self.plot_histogram(encoded_image[:, :, 2], 'Blue Channel - Encoded',color='blue')
+
+        plt.subplots_adjust(top=0.85)
+        plt.tight_layout(rect=[0, 0, 1, 0.95])
+        plt.suptitle( title)
+        plt.show()
+
+    def plot_histogram(self, image, title,color):
+        hist = cv2.calcHist([np.array(image)], [0], None, [256], [0, 256])
+        plt.plot(hist, color)
+        plt.title(title)
+        plt.xlim([0, 256])
