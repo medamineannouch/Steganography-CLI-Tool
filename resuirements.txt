@@ -2,3 +2,5 @@ numpy
 scikit-learn
 xlwt
 matplotlib
+scikit-image
+PyWavelets ==> (pywt)
