@@ -5,7 +5,7 @@ from os import path
 import cv2
 import numpy as np
 
-class Lsb:
+class Lsb():
     def __init__(self,BITS) -> None:
         
         self.BITS = BITS
@@ -14,11 +14,10 @@ class Lsb:
         self.BYTES_PER_BYTE = math.ceil(8 / BITS)
         self.FLAG = '%'
     
-    def insert(self,img_path, msg) -> str:
+    def insert(self,img_path, msg, encode_path):
         img = cv2.imread(img_path, cv2.IMREAD_ANYCOLOR)
         # Save origin shape to restore image
         ori_shape = img.shape
-        print('original shape: ',ori_shape)
         max_bytes = ori_shape[0] * ori_shape[1] // self.BYTES_PER_BYTE
         # Encode message with length
         msg = '{}{}{}'.format(len(msg), self.FLAG, msg)
@@ -29,10 +28,8 @@ class Lsb:
             self.encode(data[idx*self.BYTES_PER_BYTE: (idx+1) * self.BYTES_PER_BYTE], val)
 
         img = np.reshape(data, ori_shape)
-        filename, _ = path.splitext(img_path)
-        filename += '_lsb_embeded' + ".png"
-        cv2.imwrite(filename, img)
-        return filename
+        cv2.imwrite(encode_path, img)
+
     
     def encode(self,block, data) -> None:
         # returns the Unicode code from a given character
@@ -72,8 +69,6 @@ class Lsb:
         return chr(val)
     
     
-#determiner le nombre de bits sur lequel on va travailler
-lsb = Lsb(2)
 
 # print(lsb.insert('./assets/ubuntu.jpg', 'let\'s meet at 10:00 under the bridge'))
 

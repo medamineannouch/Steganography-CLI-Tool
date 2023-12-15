@@ -5,7 +5,11 @@ import copy
 from PIL import Image
 
 class DWT():
-    def wordToBit(self,words):
+    def __init__(self):
+        pass
+
+    def _word_to_bit(self, words):
+        # Convert a string of words to a list of bits
         result = []
         for c in words:
             bits = bin(ord(c))[2:]
@@ -13,197 +17,150 @@ class DWT():
             result.extend([int(b) for b in bits])
         return result
 
-    def bitToWord(self,bits):
+    def _bit_to_word(self, bits):
+        # Convert a list of bits to a string of words
         chars = []
         for b in range(len(bits) // 8):
             byte = bits[b*8:(b+1)*8]
             chars.append(chr(int(''.join([str(bit) for bit in byte]), 2)))
-        flag = ''.join(chars)
-        return flag
+        return ''.join(chars)
 
-    def intToBit(self,val):
+    def _int_to_bit(self, val):
+        # Convert an integer to a list of bits
         result = list(format(val, "b"))
         result = list(map(int, result))
         return result
 
-    def bitToInt(self,bit):
+    def _bit_to_int(self, bit):
+        # Convert a list of bits to an integer
         val = ''.join(str(e) for e in bit)
         result = int(val, 2)
         return result
 
-    def lsbVal(self,a, b):
+    def _lsb_val(self, a, b):
+        # Determine the least significant bit value
         result = 0
         if a == b:
             result = 0
         elif a == 1 and b == 0:
             result = 2
         elif a == 0 and b == 1:
-            result = - 2
-
+            result = -2
         return result
 
-    def normalize_coefficients(self,coefficients):
-        # Normalize coefficients by subtracting 1 from odd values
+    def _normalize_coefficients(self, coefficients):
+        # Normalize coefficients by subtracting 1 from odd values and clipping to the valid intensity range
         coefficients[coefficients % 2 != 0] -= 1
-        # Clip the coefficients to ensure they are within the valid intensity range (0-255)
         coefficients = np.clip(coefficients, 0, 255)
         return coefficients
 
-
-    def dwtEncode(self,image_path, msg, encoded_path):
-        img= cv2.imread(image_path)
-        blue, green, red = cv2.split(img)
-
-        bitMessage = self.wordToBit(msg)
-
-        bitLenght = len(bitMessage)
+    def _modify_coefficients1(self, coefficients, bit_message):
+        # Modify wavelet coefficients based on the message
+        result = copy.deepcopy(coefficients)
         index = 0
 
-        coeffsr = pywt.dwt2(red, 'haar')
-        cAr, (cHr, cVr, cDr) = coeffsr
-
-        coeffsg = pywt.dwt2(green, 'haar')
-        cAg, (cHg, cVg, cDg) = coeffsg
-
-        coeffsb = pywt.dwt2(blue, 'haar')
-        cAb, (cHb, cVb, cDb) = coeffsb
-
-
-        cArResult = copy.deepcopy(cAr)
-        cAgResult = copy.deepcopy(cAg)
-        cAbResult = copy.deepcopy(cAb)
-
-        for i in range(len(cAr)):
-            for j in range(len(cAr)):
-                # red
-                if index < bitLenght:
-                    lsbPixel = self.intToBit(int(cAr[i, j]))[-2]
-                    cArResult[i, j] = cAr[i, j] + self.lsbVal(bitMessage[index], lsbPixel)
-                    index += 1
-                # green
-                if index < bitLenght:
-                    lsbPixel = self.intToBit(int(cAg[i, j]))[-2]
-                    cAgResult[i, j] = cAg[i, j] + self.lsbVal(bitMessage[index], lsbPixel)
-                    index += 1
-                # blue
-                if index < bitLenght:
-                    lsbPixel = self.intToBit(int(cAb[i, j]))[-2]
-                    cAbResult[i, j] = cAb[i, j] + self.lsbVal(bitMessage[index], lsbPixel)
+        for i in range(len(coefficients)):
+            for j in range(len(coefficients[i])):
+                if index < len(bit_message):
+                    lsb_pixel = self._int_to_bit(int(coefficients[i, j]))[-2]
+                    result[i, j] = coefficients[i, j] + self._lsb_val(bit_message[index], lsb_pixel)
                     index += 1
 
-        # Normalize coefficients --- needs more actions
-        #cArResult = self.normalize_coefficients(cArResult)
-        #cAgResult = self.normalize_coefficients(cAgResult)
-        #cAbResult = self.normalize_coefficients(cAbResult)
+        return result
 
+    def _modify_coefficients(self, coefficients, bit_message):
+        # Modify wavelet coefficients based on the message
+        result = copy.deepcopy(coefficients)
+        index = 0
 
+        for i in range(len(coefficients)):
+            for j in range(len(coefficients[i])):
+                # Check if the index is within the bounds of the bit_message
+                if index < len(bit_message):
+                    # Extract the current coefficient
+                    current_coefficient = int(coefficients[i, j])
 
-        coeffsr2 = cArResult, (cHr, cVr, cDr)
-        idwr = pywt.idwt2(coeffsr2, 'haar')
-        idwr = np.uint8(idwr)
+                    # Convert the coefficient to bits
+                    coefficient_bits = self._int_to_bit(current_coefficient)
 
-        coeffsg2 = cAgResult, (cHg, cVg, cDg)
-        idwg = pywt.idwt2(coeffsg2, 'haar')
-        idwg = np.uint8(idwg)
+                    # Ensure that the coefficient has at least 2 bits
+                    if len(coefficient_bits) > 1:
+                        # Modify the least significant bit (LSB)
+                        coefficient_bits[-2] = int(bit_message[index])
 
-        coeffsb2 = cAbResult, (cHb, cVb, cDb)
-        idwb = pywt.idwt2(coeffsb2, 'haar')
-        idwb = np.uint8(idwb)
+                        # Convert the modified bits back to an integer
+                        modified_coefficient = self._bit_to_int(coefficient_bits)
 
-        ImageResult = cv2.merge((idwb, idwg, idwr))
+                        # Update the result
+                        result[i, j] = modified_coefficient
+                        index += 1
 
-        cv2.imwrite(encoded_path, ImageResult)
+        return result
 
-
-    def dwtDecode(self,image_path):
-        img= cv2.imread(image_path)
-
-        blue, green, red = cv2.split(img)
-
-        coeffsr = pywt.dwt2(red, 'haar')
-        cAr, (cHr, cVr, cDr) = coeffsr
-
-        coeffsg = pywt.dwt2(green, 'haar')
-        cAg, (cHg, cVg, cDg) = coeffsg
-
-        coeffsb = pywt.dwt2(blue, 'haar')
-        cAb, (cHb, cVb, cDb) = coeffsb
-        bit = []
-
-        for i in range(len(cAr)):
-            for j in range(len(cAr)):
-                if len(self.intToBit(int(cAr[i, j]))) > 2:
-                    bit.append(self.intToBit(int(cAr[i, j]))[-2])
-                else:
-                    bit.append('0')
-
-                if len(self.intToBit(int(cAg[i, j]))) > 2:
-                    bit.append(self.intToBit(int(cAg[i, j]))[-2])
-                else:
-                    bit.append('0')
-
-                if len(self.intToBit(int(cAb[i, j]))) > 2:
-                    bit.append(self.intToBit(int(cAb[i, j]))[-2])
-                else:
-                    bit.append('0')
-
-        return self.bitToWord(bit)
-
-    def dwtDecode2(self,image_path):
+    def _dwt_encode(self, image_path, msg,encoded_path):
+        # Encode a message in an image using Discrete Wavelet Transform
         img = cv2.imread(image_path)
         blue, green, red = cv2.split(img)
 
-        coeffsr = pywt.dwt2(red, 'haar')
-        cAr, (cHr, cVr, cDr) = coeffsr
+        bit_message = self._word_to_bit(msg)
+        bit_length = len(bit_message)
 
-        coeffsg = pywt.dwt2(green, 'haar')
-        cAg, (cHg, cVg, cDg) = coeffsg
+        # Apply DWT to each color channel
+        coefficients_r = pywt.dwt2(red, 'haar')
+        coefficients_g = pywt.dwt2(green, 'haar')
+        coefficients_b = pywt.dwt2(blue, 'haar')
 
-        coeffsb = pywt.dwt2(blue, 'haar')
-        cAb, (cHb, cVb, cDb) = coeffsb
+        # Modify wavelet coefficients based on the message
+        coefficients_r_result = self._modify_coefficients(coefficients_r[0], bit_message)
+        coefficients_g_result = self._modify_coefficients(coefficients_g[0], bit_message)
+        coefficients_b_result = self._modify_coefficients(coefficients_b[0], bit_message)
+
+        # Normalize and reconstruct the image
+        reconstructed_r = pywt.idwt2((coefficients_r_result, coefficients_r[1]), 'haar')
+        reconstructed_g = pywt.idwt2((coefficients_g_result, coefficients_g[1]), 'haar')
+        reconstructed_b = pywt.idwt2((coefficients_b_result, coefficients_b[1]), 'haar')
+
+        # Merge the color channels
+        image_result = cv2.merge((np.uint8(reconstructed_b), np.uint8(reconstructed_g), np.uint8(reconstructed_r)))
+        cv2.imwrite(encoded_path, image_result)
+
+
+    def _dwt_decode(self, image_path):
+        # Decode a message from an image using Discrete Wavelet Transform
+        img = cv2.imread(image_path)
+        blue, green, red = cv2.split(img)
+
+        # Apply DWT to each color channel
+        coefficients_r = pywt.dwt2(red, 'haar')
+        coefficients_g = pywt.dwt2(green, 'haar')
+        coefficients_b = pywt.dwt2(blue, 'haar')
 
         bit = []
 
-        for i in range(min(len(cAr), len(cAg), len(cAb))):  # Use the minimum length to avoid index out of bounds
-            for j in range(min(len(cAr[i]), len(cAg[i]), len(cAb[i]))):
-                # Red channel
-                if i < len(cAr) and j < len(cAr[i]):
-                    bit.append(self.intToBit(int(cAr[i, j]))[-2])
+        # Extract the least significant bit from wavelet coefficients
+        for coefficients in [coefficients_r[0], coefficients_g[0], coefficients_b[0]]:
+            for i in range(len(coefficients)):
+                for j in range(len(coefficients[i])):
+                    if len(self._int_to_bit(int(coefficients[i, j]))) > 2:
+                        bit.append(self._int_to_bit(int(coefficients[i, j]))[-2])
+                    else:
+                        bit.append('0')
 
-                # Green channel
-                if i < len(cAg) and j < len(cAg[i]):
-                    bit.append(self.intToBit(int(cAg[i, j]))[-2])
+        # Convert bits to a word
+        return self._bit_to_word(bit)
 
-                # Blue channel
-                if i < len(cAb) and j < len(cAb[i]):
-                    bit.append(self.intToBit(int(cAb[i, j]))[-2])
+    def encode_message(self, image_path, msg, encoded_path):
+        # Encode a message in an image and save the result
+        encoded_image = self._dwt_encode(image_path, msg)
+        cv2.imwrite(encoded_path, encoded_image)
 
-        return self.bitToWord(bit)
-
-
-    def decode_message(image_path):
-        original_image = Image.open(image_path)
-        pixel = list(original_image.getdata())
-
-        binary_message = ""
-        for i in range(len(pixel)):
-            for offset in range(3):
-                value = 0
-                if pixel[i][offset] % 2 != 0:
-                    value = 1
-                binary_message += str(value)
-
-        output = ""
-        for i in range(0, len(binary_message), 8):
-            c = 0
-            for j in range(8):
-                c <<= 1
-                c |= int(binary_message[i + j])
-
-            output += chr(c)
-
-        return output
+    def decode_message(self, image_path):
+        # Decode a message from an image
+        return self._dwt_decode(image_path)
 
 
-
-
+# Example Usage:
+# encoder_decoder = DWTEncoderDecoder()
+# encoder_decoder.encode_message('input_image.jpg', 'Hello, World!', 'encoded_image.jpg')
+# decoded_message = encoder_decoder.decode_message('encoded_image.jpg')
+# print(decoded_message)
