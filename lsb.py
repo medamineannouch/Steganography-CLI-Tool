@@ -1,7 +1,7 @@
 import sys
 import math
 from os import path
-
+from PIL import Image
 import cv2
 import numpy as np
 
@@ -67,6 +67,29 @@ class Lsb():
         for idx in range(len(block)):
             val |= (block[idx] & self.LOW_BITS) << (idx * self.BITS)
         return chr(val)
+
+    def decode_message(self,image_path):
+        original_image = Image.open(image_path)
+        pixel = list(original_image.getdata())
+
+        binary_message = ""
+        for i in range(len(pixel)):
+            for offset in range(3):
+                value = 0
+                if pixel[i][offset] % 2 != 0:
+                    value = 1
+                binary_message += str(value)
+
+        output = ""
+        for i in range(0, len(binary_message), 8):
+            c = 0
+            for j in range(8):
+                c <<= 1
+                c |= int(binary_message[i + j])
+
+            output += chr(c)
+
+        return output
     
     
 

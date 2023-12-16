@@ -2,7 +2,6 @@ import numpy as np
 import cv2
 import pywt
 import copy
-from PIL import Image
 
 class DWT():
     def __init__(self):
@@ -54,19 +53,6 @@ class DWT():
         coefficients = np.clip(coefficients, 0, 255)
         return coefficients
 
-    def _modify_coefficients1(self, coefficients, bit_message):
-        # Modify wavelet coefficients based on the message
-        result = copy.deepcopy(coefficients)
-        index = 0
-
-        for i in range(len(coefficients)):
-            for j in range(len(coefficients[i])):
-                if index < len(bit_message):
-                    lsb_pixel = self._int_to_bit(int(coefficients[i, j]))[-2]
-                    result[i, j] = coefficients[i, j] + self._lsb_val(bit_message[index], lsb_pixel)
-                    index += 1
-
-        return result
 
     def _modify_coefficients(self, coefficients, bit_message):
         # Modify wavelet coefficients based on the message
@@ -149,18 +135,7 @@ class DWT():
         # Convert bits to a word
         return self._bit_to_word(bit)
 
-    def encode_message(self, image_path, msg, encoded_path):
-        # Encode a message in an image and save the result
-        encoded_image = self._dwt_encode(image_path, msg)
-        cv2.imwrite(encoded_path, encoded_image)
-
-    def decode_message(self, image_path):
-        # Decode a message from an image
-        return self._dwt_decode(image_path)
 
 
-# Example Usage:
-# encoder_decoder = DWTEncoderDecoder()
-# encoder_decoder.encode_message('input_image.jpg', 'Hello, World!', 'encoded_image.jpg')
-# decoded_message = encoder_decoder.decode_message('encoded_image.jpg')
-# print(decoded_message)
+
+
